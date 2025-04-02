@@ -1,0 +1,9 @@
+Status: active
+
+To                         Action      From
+--                         ------      ----
+53/udp                     ALLOW       192.168.50.4
+53/tcp                     ALLOW       192.168.50.4
+53/tcp                     ALLOW       192.168.50.3
+22/tcp                     ALLOW       Anywhere
+22/tcp (v6)                ALLOW       Anywhere (v6)

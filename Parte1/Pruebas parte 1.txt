@@ -1,0 +1,65 @@
+# Parte 1
+## Desde `firewall`
+
+Al ejecutar `dig @192.168.50.4 ejemplo.com`, el nombre de dominio debería resolverse correctamente.
+vagrant@firewall:~$ dig @192.168.50.4 midominio.com
+
+; <<>> DiG 9.18.30-0ubuntu0.22.04.2-Ubuntu <<>> @192.168.50.4 midominio.com
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 4819
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: fd2f7550b4771bc80100000067ecaf9f2aca8cff0e589954 (good)
+;; QUESTION SECTION:
+;midominio.com.                 IN      A
+
+;; AUTHORITY SECTION:
+midominio.com.          604800  IN      SOA     ns1.midominio.com. admin.midominio.com. 2 604800 86400 2419200 604800
+
+;; Query time: 0 msec
+;; SERVER: 192.168.50.4#53(192.168.50.4) (UDP)
+;; WHEN: Wed Apr 02 03:31:45 UTC 2025
+;; MSG SIZE  rcvd: 116
+
+Al ejecutar `dig @192.168.50.3 ejemplo.com`, la conexión debería ser rechazada o devolver un error de **timeout**.
+vagrant@firewall:~$ dig @192.168.50.3 ejemplo.com
+;; communications error to 192.168.50.3#53: timed out
+;; communications error to 192.168.50.3#53: timed out
+;; communications error to 192.168.50.3#53: timed out
+
+; <<>> DiG 9.18.30-0ubuntu0.22.04.2-Ubuntu <<>> @192.168.50.3 ejemplo.com
+; (1 server found)
+;; global options: +cmd
+;; no servers could be reached
+
+Al ejecutar `dig @192.168.50.3 ejemplo.com AXFR -y hmac-sha256:key:CLAVE`, también debería rechazar la conexión o mostrar un error de **timeout**. (bloqueos firewall)
+vagrant@firewall:~$ dig @192.168.50.3 midominio.com AXFR -y hmac-sha256:key:wWw/8qeHRwLiSbOUI+sre9lZFMp+sLh/I0KgQMXtvMA=
+;; Connection to 192.168.50.3#53(192.168.50.3) for midominio.com failed: timed out.
+;; no servers could be reached
+;; Connection to 192.168.50.3#53(192.168.50.3) for midominio.com failed: timed out.
+;; no servers could be reached
+
+
+## Desde `secundario`
+
+Al ejecutar `dig @192.168.50.3 prueba.com AXFR -y hmac-sha256:key:CLAVE`, se deberían obtener **todos los registros del dominio**.
+vagrant@secundario:~$ dig @192.168.50.3 midominio.com AXFR -y hmac-sha256:clave-transferencia:wWw/8qeHRwLiSbOUI+sre9lZFM
+p+sLh/I0KgQMXtvMA=
+
+; <<>> DiG 9.18.30-0ubuntu0.22.04.2-Ubuntu <<>> @192.168.50.3 midominio.com AXFR -y hmac-sha256:clave-transferencia:wWw/8qeHRwLiSbOUI+sre9lZFMp+sLh/I0KgQMXtvMA=
+; (1 server found)
+;; global options: +cmd
+midominio.com.          604800  IN      SOA     ns1.midominio.com. admin.midominio.com. 2 604800 86400 2419200 604800
+midominio.com.          604800  IN      NS      ns1.midominio.com.
+cliente.midominio.com.  604800  IN      A       192.168.50.5
+ns1.midominio.com.      604800  IN      A       192.168.50.3
+midominio.com.          604800  IN      SOA     ns1.midominio.com. admin.midominio.com. 2 604800 86400 2419200 604800
+clave-transferencia.    0       ANY     TSIG    hmac-sha256. 1743564848 300 32 QwrXDQQHuyBzWY4QqXJO69vu7NxQqIPUCbPJwXTEguI= 3601 NOERROR 0
+;; Query time: 0 msec
+;; SERVER: 192.168.50.3#53(192.168.50.3) (TCP)
+;; WHEN: Wed Apr 02 03:34:08 UTC 2025
+;; XFR size: 5 records (messages 1, bytes 298)

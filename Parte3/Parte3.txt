@@ -1,0 +1,151 @@
+# Pruebas Firewall avanzado parte 3
+
+## FTP: Desde cliente
+
+vagrant@cliente:~$ ftp 192.168.90.3
+Connected to 192.168.90.3.
+220 Bienvenido usuario.
+Name (192.168.90.3:vagrant): vagrant
+331 Please specify the password.
+Password:
+230 Login successful.
+Remote system type is UNIX.
+Using binary mode to transfer files.
+ftp>
+
+## FTP: Desde el atacante
+vagrant@atacante:~$ ftp 192.168.90.3
+ftp: Can't connect to `192.168.90.3:21': Connection refused
+ftp: Can't connect to `192.168.90.3:ftp'
+ftp>
+
+## HTTP: Desde el cliente
+vagrant@cliente:~$ curl 192.168.90.3
+<h1>Servidor con apache</h1>
+
+## HTTP: Desde el atacante
+vagrant@atacante:~$ curl 192.168.90.3
+curl: (7) Failed to connect to 192.168.90.3 port 80 after 21006 ms: Connection refused
+
+## DNS: Desde el cliente 
+vagrant@cliente:~$ dig @192.168.90.3 prueba.com
+
+; <<>> DiG 9.18.30-0ubuntu0.22.04.2-Ubuntu <<>> @192.168.90.3 prueba.com
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 27071
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 1, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 1232
+; COOKIE: 1ac241514d4d7b8f0100000067eca668a9d4f64a1ba3e704 (good)
+;; QUESTION SECTION:
+;prueba.com.                    IN      A
+
+;; AUTHORITY SECTION:
+prueba.com.             604800  IN      SOA     prueba.com. root.prueba.com. 2 604800 86400 2419200 604800
+
+;; Query time: 0 msec
+;; SERVER: 192.168.90.3#53(192.168.90.3) (UDP)
+;; WHEN: Wed Apr 02 02:52:24 UTC 2025
+;; MSG SIZE  rcvd: 108
+
+## DNS: Desde el atacante
+vagrant@atacante:~$ dig @192.168.90.3 prueba.com
+;; communications error to 192.168.90.3#53: timed out
+^Cvagrant@atacante:~$
+
+# Pruebas contra ataques
+## Conexiones erradas a FTP
+vagrant@cliente:~$ for i in {1..6}; do echo -e "prueba\asdasda" | ftp 192.168.90.3; done
+Connected to 192.168.90.3.
+220 Bienvenido usuario.
+Name (192.168.90.3:vagrant): 331 Please specify the password.
+Password:
+530 Login incorrect.
+ftp: Login failed
+221 Goodbye.
+Connected to 192.168.90.3.
+220 Bienvenido usuario.
+Name (192.168.90.3:vagrant): 331 Please specify the password.
+Password:
+530 Login incorrect.
+ftp: Login failed
+221 Goodbye.
+Connected to 192.168.90.3.
+220 Bienvenido usuario.
+Name (192.168.90.3:vagrant): 331 Please specify the password.
+Password:
+530 Login incorrect.
+ftp: Login failed
+221 Goodbye.
+Connected to 192.168.90.3.
+220 Bienvenido usuario.
+Name (192.168.90.3:vagrant): 331 Please specify the password.
+Password:
+530 Login incorrect.
+ftp: Login failed
+221 Goodbye.
+Connected to 192.168.90.3.
+220 Bienvenido usuario.
+Name (192.168.90.3:vagrant): 331 Please specify the password.
+Password:
+530 Login incorrect.
+ftp: Login failed
+^C421 Service not available, user interrupt. Connection closed.
+ftp: Can't connect to `192.168.90.3:21': Connection refused
+ftp: Can't connect to `192.168.90.3:ftp'
+?Invalid command.
+
+## Conexiones simultaneas
+vagrant@cliente:~$ for i in {1..6}; do ftp -n 192.168.90.3 & done
+[13] 5515
+[14] 5516
+[15] 5517
+[16] 5518
+[17] 5519
+[18] 5520
+vagrant@cliente:~$ Connected to 192.168.90.3.
+Connected to 192.168.90.3.
+Connected to 192.168.90.3.
+Connected to 192.168.90.3.
+220 Bienvenido usuario.
+Connected to 192.168.90.3.
+220 Bienvenido usuario.
+Connected to 192.168.90.3.
+220 Bienvenido usuario.
+421 There are too many connections from your internet address.
+220 Bienvenido usuario.
+421 There are too many connections from your internet address.
+
+## Pruebas contra ataques
+## Desde cliente
+vagrant@cliente:~$ curl 192.168.90.3
+<h1>Servidor con apache</h1>
+
+## Prueba de protección DNS (rate-limit)
+vagrant@atacante:~$ for i in {1..200}; do dig @192.168.90.3 prueba.com +short & done
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out
+;; communications error to 192.168.90.3#53: timed out

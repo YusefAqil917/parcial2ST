@@ -1,0 +1,7 @@
+Status: active
+
+To                         Action      From
+--                         ------      ----
+53/tcp                     ALLOW       192.168.50.2
+22/tcp                     ALLOW       Anywhere
+22/tcp (v6)                ALLOW       Anywhere (v6)
